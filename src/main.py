@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import ctypes
 from audioplayer import AudioPlayer
 from pynput.keyboard import Controller
 from PyQt5.QtCore import QObject, QProcess
@@ -131,6 +132,7 @@ class WhisperWriterApp(QObject):
                 self.stop_result_thread()
             return
 
+        self.target_window = ctypes.windll.user32.GetForegroundWindow()
         self.start_result_thread()
 
     def on_deactivation(self):
@@ -166,6 +168,10 @@ class WhisperWriterApp(QObject):
         """
         When the transcription is complete, type the result and start listening for the activation key again.
         """
+        ConfigManager.console_print(f'Typing result: "{result}"')
+        if hasattr(self, 'target_window') and self.target_window:
+            ctypes.windll.user32.SetForegroundWindow(self.target_window)
+            time.sleep(0.1)
         self.input_simulator.typewrite(result)
 
         if ConfigManager.get_config_value('misc', 'noise_on_completion'):

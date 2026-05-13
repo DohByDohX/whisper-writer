@@ -2,7 +2,8 @@ import subprocess
 import os
 import signal
 import time
-from pynput.keyboard import Controller as PynputController
+import pyperclip
+from pynput.keyboard import Controller as PynputController, Key
 
 from utils import ConfigManager
 
@@ -31,7 +32,7 @@ class InputSimulator:
         self.input_method = ConfigManager.get_config_value('post_processing', 'input_method')
         self.dotool_process = None
 
-        if self.input_method == 'pynput':
+        if self.input_method in ('pynput', 'clipboard'):
             self.keyboard = PynputController()
         elif self.input_method == 'dotool':
             self._initialize_dotool()
@@ -61,6 +62,8 @@ class InputSimulator:
         interval = ConfigManager.get_config_value('post_processing', 'writing_key_press_delay')
         if self.input_method == 'pynput':
             self._typewrite_pynput(text, interval)
+        elif self.input_method == 'clipboard':
+            self._typewrite_clipboard(text)
         elif self.input_method == 'ydotool':
             self._typewrite_ydotool(text, interval)
         elif self.input_method == 'dotool':
@@ -78,6 +81,14 @@ class InputSimulator:
             self.keyboard.press(char)
             self.keyboard.release(char)
             time.sleep(interval)
+
+    def _typewrite_clipboard(self, text):
+        pyperclip.copy(text)
+        time.sleep(0.05)
+        self.keyboard.press(Key.ctrl)
+        self.keyboard.press('v')
+        self.keyboard.release('v')
+        self.keyboard.release(Key.ctrl)
 
     def _typewrite_ydotool(self, text, interval):
         """
