@@ -154,6 +154,40 @@ WhisperWriter uses a configuration file to customize its behaviour. To set up th
 
 If any of the configuration options are invalid or not provided, the program will use the default values.
 
+## Windows Notes
+
+This fork includes fixes for several Windows-specific issues not present in the original repo:
+
+### Installation
+`pip install -r requirements.txt` fails on Windows because `av==11.0.0` (pinned in the original) has no pre-built Windows binary and requires Microsoft C++ Build Tools to compile. To work around this, install dependencies in two steps:
+
+```
+pip install av --only-binary :all:
+pip install -r requirements.txt
+```
+
+### Reliable text input on Windows (`clipboard` input method)
+The default `pynput` input method simulates keystrokes character by character, which is blocked silently in many Windows applications due to UIPI (User Interface Privilege Isolation). This fork adds a `clipboard` input method that copies the transcription to the clipboard and simulates Ctrl+V, which works reliably across all Windows applications.
+
+Set the following in your `src/config.yaml` (or via the Settings window):
+```yaml
+post_processing:
+  input_method: clipboard
+```
+
+### Focus restoration on Windows
+When the status window closes after transcription, Windows shifts focus away from your target window before the text is typed. This fork fixes this by capturing the active window when the activation key is pressed and restoring focus to it before pasting the transcription.
+
+### Running without a console window
+On Windows, use `pythonw.exe` instead of `python.exe` to run WhisperWriter without a console window appearing:
+
+```
+venv\Scripts\pythonw.exe run.py
+```
+
+### Language code format
+The `language` setting in the Settings window must be a valid [ISO-639-1 code](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes) (e.g. `en` for English, `fr` for French). Entering the full language name (e.g. `English`) will cause transcription to fail.
+
 ## Known Issues
 
 You can see all reported issues and their current status in our [Issue Tracker](https://github.com/savbell/whisper-writer/issues). If you encounter a problem, please [open a new issue](https://github.com/savbell/whisper-writer/issues/new) with a detailed description and reproduction steps, if possible.
